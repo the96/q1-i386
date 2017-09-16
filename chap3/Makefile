@@ -60,19 +60,19 @@ test-4: 10thprime $(TMP_PREFIX)10thprime0 $(TMP_PREFIX)10thprime1
 	                $(TMP_PREFIX)10thprime1 $(TMP_PREFIX)10thprime1.s
 
 $(TMP_PREFIX)isprime0.s: isprime.s
-	test `sed 's/;.*//' $< | grep -P '\b12379\b' | wc -l` = 1
+	test `perl -pe 's/;.*//' $< | grep -P '\b12379\b' | wc -l` = 1
 	perl -pe 's/\b12379\b/12389/g' $< > $@
 $(TMP_PREFIX)isprime1.s: isprime.s
 	perl -pe 's/\b12379\b/3/g' $< > $@
 
 $(TMP_PREFIX)nprime0.s: nprime255.s
-	test `sed 's/;.*//' $< | grep -P '\b255\b' | wc -l` = 1
+	test `perl -pe 's/;.*//' $< | grep -P '\b255\b' | wc -l` = 1
 	perl -pe 's/\b255\b/1500/g' $< > $@
 $(TMP_PREFIX)nprime1.s: nprime255.s
 	perl -pe 's/\b255\b/3/g' $< > $@
 
 $(TMP_PREFIX)10thprime0.s: 10thprime.s
-	test `sed 's/;.*//' $< | grep -P '\b255\b' | wc -l` = 1
+	test `perl -pe 's/;.*//' $< | grep -P '\b255\b' | wc -l` = 1
 	perl -pe 's/\b255\b/200/g' $< > $@
 $(TMP_PREFIX)10thprime1.s: 10thprime.s
 	perl -pe 's/\b255\b/31/g' $< > $@

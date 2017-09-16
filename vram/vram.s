@@ -8,8 +8,9 @@
 
 	; AX, CX, DXは番地の指定に使えない (EAX, ECX, EDXは使える).
 
-	org	0x0		; 開始番地
-	mov	ax, 0xB800
+	org	0x7c00		; 開始番地
+
+	mov	ax, 0xb800	; VRAMの開始番地 (÷ 16)
 	mov	ds, ax		; セグメントレジスタにVRAMの番地を代入
 
 	mov	bx, 0		; VRAM上の番地
@@ -25,5 +26,6 @@ loop0:
 
 	hlt			; HALT (CPUを停止)
 
+	; 以降はセクタサイズに合わせるための詰め物
 	times	510-($-$$) db 0	; セクタ末尾まで0で埋める ($$は開始番地)
 	db	0x55, 0xaa	; Boot Signature
