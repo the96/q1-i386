@@ -1,3 +1,4 @@
+    ;; This program calculate 98 + 7 - (6 * 5) + (4 * 3 * 2) + 1 and print that answer
     section .text
     global _start
 _start:
