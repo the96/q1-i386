@@ -1,3 +1,4 @@
+    ;check if target number is a prime number
     section .text
     global _start
 _start:
