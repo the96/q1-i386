@@ -26,7 +26,8 @@ else:
 	;; システムコールを呼び出し、出力と終了を行う
 	mov eax, 4		; write システムコール番号
 	mov ebx, 1		; 標準出力
-	mov edx, edi		; 文字列の長さ
+	mov ecx, buf		; 先頭のアドレス
+	mov edx, nchar + 1	; 文字列の長さ
 	int 0x80		; write システムコール
 	mov eax, 1		; exit システムコール番号
 	mov ebx, 0		; 終了コード
@@ -34,7 +35,7 @@ else:
 	
 
 	section .data
-N:	equ 15			; 表示したい数字の文字列
+N:	equ 3000		; 表示したい数字の文字列
 nchar:	equ 10			; 最大で表示する数字の桁数
-buf:	times nchar db 0	; nchar 文字分の領域
+buf:	times nchar db '0'	; nchar 文字分の領域
 	db 0x0a			; 改行
