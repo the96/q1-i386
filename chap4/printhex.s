@@ -35,7 +35,7 @@ else:
 	
 
 	section .data
-N:	equ 3000		; 表示したい数字の文字列
-nchar:	equ 10			; 最大で表示する数字の桁数
+N:	equ 4294967295		; 表示したい数字の文字列
+nchar:	equ 8			; 最大で表示する数字の桁数
 buf:	times nchar db '0'	; nchar 文字分の領域
 	db 0x0a			; 改行
