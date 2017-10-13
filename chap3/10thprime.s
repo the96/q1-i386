@@ -6,11 +6,11 @@ _start:
     mov ebx, 255    ;input first test number
 
 nPrimeLoop:
-    mov ecx, 2      ;start test division
+    mov ecx, 2      ;start test divisor
 
 checkPrime:
-    mov eax, ebx    ;a divisor
-    mov edx, 0      ;a divisor(top 32 bit)
+    mov eax, ebx    ;a dividend
+    mov edx, 0      ;a dividend(top 32 bit)
     div ecx         ;edx = edx % ecx
 
     cmp edx, 0      ;if edx == 0(edx % ecx == 0)
