@@ -8,10 +8,10 @@ _start:
     mov edi,   2        ;n = 2
 
 loopFib:
-    mov eax, [fn1]  ;
-    add [fn2],eax   ;f(n - 1) + f(n - 2)
+    mov eax,  [fn1] ;
+    add [fn2], eax  ;f(n - 1) + f(n - 2)
     mov esi,  [fn2] ;esi = f(n - 1) + f(n - 2)
-    mov [fn2],eax   ;f(n - 2) = f(n - 1)
+    mov [fn2], eax  ;f(n - 2) = f(n - 1)
     mov [fn1], esi  ;f(n) = esi
 
     jmp funcPrint   ;print f(n)
@@ -36,7 +36,7 @@ loop0:
     mov [ecx], dl   ;add char of digit
     mov edx, 0      ;edx reset
     inc esi         ;count digit
-    cmp eax,0       ;eax == 0
+    cmp eax, 0      ;eax == 0
     jne loop0
 
     mov eax, 4      ;system call number
