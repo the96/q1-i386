@@ -5,7 +5,6 @@ _start:
 	mov eax, N		; eax に表示したい文字列を代入
 	mov esi, 16		; 16進数を求めるための除数
 	mov ecx, buf + nchar	; 作業領域の末尾の次の番地
-	mov edi, 1		; 表示文字列の長さ
 	
 loop0:	mov edx, 0		; 前回の計算結果である剰余を消去する
 	div esi			; N を 16 で割る
@@ -17,7 +16,6 @@ loop0:	mov edx, 0		; 前回の計算結果である剰余を消去する
 else:	
 	add bx, dx		; 剰余を代入する
 	dec ecx			; 次の書き込み先
-	inc edi 		; 表示文字列を増加
 	mov [ecx], bl		; 作業領域に1文字書き込む
 
 	cmp eax, 0		; eax と 0 を比較
