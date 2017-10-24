@@ -2,8 +2,9 @@
 	section .text
 	global _start
 	extern print_eax	; 別ファイルのラベル
+N:	equ 255			; 素数判定対象数 n
 _start:
-	mov ebx, 255		; 素数判定対象数 n
+	mov ebx, N		; 素数判定対象数 n を代入
 	mov ecx, 2		; (n までの除数) 各整数 d
 	mov esi, 0		; 素数の個数
 loop0:	
