@@ -6,17 +6,21 @@ OBJS_SORT = 163.o sort.o print_eax.o
 OBJS_TEST_SORT = test_sort.o sort.o print_eax.o
 OBJS_PRIME = 10primes.o print_eax.o
 OBJS_PRINT = 161.o print_eax.o
+OBJS_DIC = test_sort_table.o sort_table.o print_eax.o print_mem.o
 
 # pattern rules
 %.o: %.s
 		$(AS) $<
 
-.PHONY: all clean test
+.PHONY: all clean test 
 
 # generate rules
 
 # default target
 all: test_print.out 10primes.out test_sort.out test_sort2.out
+
+sort_table: $(OBJS_DIC)
+		$(LD) $(LDFLAGS) $+ -o $@
 
 test_sort.out: $(OBJS_TEST_SORT)
 		$(LD) $(LDFLAGS) $+ -o $@
