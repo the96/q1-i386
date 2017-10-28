@@ -1,225 +1,284 @@
-	section .text
-	extern print_eax, print_mem
-	global map_init, map_add, map_get
+    section .text
+    global map_init, map_add, map_get
 
 map_init:
-	ret
+    ret
 
 map_add:
-	push	eax
-	push	ebx
-	push	ecx
-	push	edx
-	push	esi
-	push	edi
-	mov eax, 11111
-	;; 	call print_eax
-	;; ハッシュ値を算出
-	mov	esi, 0		; カウンタの初期化
-	mov	edi, 0		; ハッシュ値の初期化
-loop0:
-	mov	edx, 0
-	mov	dl, [ebx + esi]	; 1文字ずつ読み込む
-	cmp	dl, 0
-	je	endloop0
-	cmp	dl, 'Z'		; 大文字小文字の判断
-	jg	lowerCase3	; 小文字の場合
-	sub	dl, 'A'		;
-	jmp	endIf3
-lowerCase3:	
-	sub	dl, 'a'
-endIf3:
-	mov	eax, edi
-	push	edx
-	mov	dl, 26		; 2 ^ 5
-	mul	dl
-	pop	edx
-	add	eax, edx
-	cmp	dl, 128		; 最上位bitがtrueなら
-	jl	else0		;
-	xor	eax, 623525857	; 仮P＝0
+    push    eax
+    push    ebx
+    push    ecx
+    push    edx
+    push    esi
+    push    edi
+
+    push ecx        ;escape score
+    mov eax, 0      ;init hash key
+    mov esi, 0      ;init counter
+    mov edx, 0      ;init index of ebx
+
+createHash0:
+    push eax
+    mov eax, 0
+
+read4Bytes0:
+    push edx
+    mov ecx, 0xff
+    mul ecx
+    pop edx
+
+    mov ecx, 0
+    mov cl, [ebx + edx]
+    cmp cl, 0
+    je skip0         ;reach end of string
+    add eax, ecx
+    inc edx
+
+skip0:
+    inc esi
+    cmp esi, 4
+    jl read4Bytes0
+
+    ;<don't overwriter>
+    ;cl > end of read and hash
+    ;eax > hash key
+    ;edx > index of ebx
+    ;ebx > address of input string
+
+xxHash:
+    ;xxHash is hash algorithm thought by Cyan4973
+    ;https://github.com/Cyan4973/xxHash
+    push edx
+
+    mov esi, PRIME32_3
+    mul esi
+
+    mov esi, eax
+    shl esi, 17
+    shr eax, 15
+    add eax, esi
+
+    mov esi, PRIME32_4
+    mul esi
+
+    mov esi, eax
+    shr esi, 15
+    xor eax, esi
+
+    mov esi, PRIME32_2
+    mul esi
+
+    mov esi, eax
+    shr esi, 13
+    xor eax, esi
+
+    mov esi, PRIME32_3
+    mul esi
+
+    mov esi, eax
+    shr esi, 16
+    xor eax, esi
+    
+    mov edx, 0
+    mov esi, ndata
+    div esi
+    mov esi, edx
+
+    pop edx
+    pop eax
+    
+    add eax, esi
+
+    cmp ecx, 0
+    jne createHash0
+
+    mov edx, 0
+    mov ecx, ndata
+    div ecx
+    mov eax, edx                ;eax = eax % nadata
+
+checkAddress0:                  ;check the address is inputable
+    cmp eax, ndata              ;over range of address
+    jl else0
+    mov eax, 0
+
 else0:
-	mov	edi, eax
-	inc	esi
-	jmp	loop0
-endloop0:
-	mov	eax, edi
-	mov	edi, ndata
-	div	edi
-	mov	eax, edx
-	push	ecx
-checkAddress0:
-	cmp	eax, ndata
-	jl	else1
-	mov	eax, 0
+    mov esi, 0
+    cmp [data + eax * 8], esi   ;input none
+    je inputScore
 
-else1:
-	mov	edi, 0
-	cmp	[data + eax * 8], edi
-	je	inputScore
-
-	mov	esi, 0		; カウンタの初期化
+    mov esi, 0
 compareString0:
-	mov edi, [data + eax * 8]
-;;; 	 	mov	ecx, 0
-;;; 	 	mov	edx, 0
-	mov	cl, [edi + esi]
-	mov	dl, [ebx + esi]
-	cmp	cl, dl
-	je	equal0
+    mov edi, [data + eax * 8]
+    mov cl, [edi + esi]
+    mov dl, [ebx + esi]
+    cmp cl, dl
+    je equal0
 
-	push	eax
-	mov	eax, 77777
-	call	print_eax
-	pop	eax
-	
-	inc	eax
-	jmp	checkAddress0
+    inc eax                     ;not same name, next address
+    jmp checkAddress0
 equal0:
-	cmp	cl, 0
-	je	inputScore
-	inc	esi
-	jmp	compareString0
-inputScore:	
-	pop ecx
-	mov	[data + eax * 8], ebx
-	mov	[data + eax * 8 + 4], ecx
+    cmp cl, 0                   ;same name
+    je inputScore
 
-	pop	edi
-	pop	esi
-	pop	edx
-	pop	ecx
-	pop	ebx
-	pop	eax
-        ret
+    inc esi
+    jmp compareString0
+
+inputScore:
+    pop ecx
+    mov [data + eax * 8], ebx
+    mov [data + eax * 8 + 4], ecx
+
+    pop    edi
+    pop    esi
+    pop    edx
+    pop    ecx
+    pop    ebx
+    pop    eax
+    ret
 
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-map_get:	
-	push	ebx
-	push	ecx
-	push	edx
-	push	esi
-	push	edi
-	push eax
-	mov eax, 99999
-	;; 	call print_eax
-	pop eax
+map_get:    
+    push    ebx
+    push    ecx
+    push    edx
+    push    esi
+    push    edi
 
-	;; ハッシュ値を算出
-	mov	esi, 0		; カウンタの初期化
-	mov	edi, 0		; ハッシュ値の初期化
-loop1:
-	mov	edx, 0
-	mov	dl, [ebx + esi]	; 1文字ずつ読み込む
-	cmp	dl, 0
-	je	endloop1
-	cmp	dl, 'Z'		; 大文字小文字の判断
-	jg	lowerCase1	; 小文字の場合
-	sub	dl, 'A'		;
-	jmp	endIf1
-lowerCase1:	
-	sub	dl, 'a'
-endIf1:
-	mov	eax, edi
-	push	edx
-	mov	dl, 26		; 2 ^ 5
-	mul	dl
-	pop	edx
-	add	eax, edx
-	cmp	dl, 128		; 最上位bitがtrueなら
-	jl	else2		;
-	xor	eax, 623525857		; 仮P＝0
-else2:
-	mov	edi, eax
-	inc	esi
-	jmp	loop1
-endloop1:
-	mov	eax, edi
-	mov	edi, ndata
-	div	edi
-	mov	eax, edx
-	
-checkAddress1:
-	cmp	eax, ndata
-	jl	else3
-	mov	eax, 0
-else3:
-	mov	edi, 0
-	cmp	[data + eax * 8], edi
-	jne	else4		; データが見つからないとき
-	mov	eax, 0
-	jmp	restore
-else4:
-	mov	esi, 0		; カウンタの初期化
+    mov eax, 0      ;init hash key
+    mov esi, 0      ;init counter
+    mov edx, 0      ;init index of ebx
+
+createHash1:
+    push eax
+    mov eax, 0
+
+read4Bytes1:
+    push edx
+    mov ecx, 0xff
+    mul ecx
+    pop edx
+
+    mov ecx, 0
+    mov cl, [ebx + edx]
+    cmp cl, 0
+    je skip1         ;reach end of string
+    add eax, ecx
+    inc edx
+
+skip1:
+    inc esi
+    cmp esi, 4
+    jl read4Bytes1
+
+    ;<don't overwriter>
+    ;cl > end of read and hash
+    ;eax > hash key
+    ;edx > index of ebx
+    ;ebx > address of input string
+
+xxHash1:
+    ;xxHash is hash algorithm thought by Cyan4973
+    ;https://github.com/Cyan4973/xxHash
+    push edx
+
+    mov esi, PRIME32_3
+    mul esi
+
+    mov esi, eax
+    shl esi, 17
+    shr eax, 15
+    add eax, esi
+
+    mov esi, PRIME32_4
+    mul esi
+
+    mov esi, eax
+    shr esi, 15
+    xor eax, esi
+
+    mov esi, PRIME32_2
+    mul esi
+
+    mov esi, eax
+    shr esi, 13
+    xor eax, esi
+
+    mov esi, PRIME32_3
+    mul esi
+
+    mov esi, eax
+    shr esi, 16
+    xor eax, esi
+
+    mov edx, 0
+    mov esi, ndata
+    div esi
+    mov esi, edx
+
+    pop edx
+    pop eax
+
+    add eax, esi
+
+    cmp ecx, 0
+    jne createHash1
+
+    mov edx, 0
+    mov ecx, ndata
+    div ecx
+    mov eax, edx                ;eax = eax % nadata
+
+checkAddress1:                  ;check the address is inputable
+    cmp eax, ndata              ;over range of address
+    jl else1
+    mov eax, 0
+
+else1:
+    mov esi, 0
+    cmp [data + eax * 8], esi   ;input none
+    je notfound
+
+    mov esi, 0
 compareString1:
-	mov ecx, 0
-	mov edx, 0
-	mov edi, [data + eax * 8]
-	mov	cl, [edi + esi]
-	mov	dl, [ebx + esi]
-	
-	push eax
-	mov eax, ecx
-	;; 	call print_eax
-	mov eax, edx
-	;; 	call print_eax
-	pop eax
-	
-	cmp	cl, dl
-	je	equal1
-	inc	eax
-	jmp	checkAddress1
+    mov edi, [data + eax * 8]
+    mov cl, [edi + esi]
+    mov dl, [ebx + esi]
+    cmp cl, dl
+    je equal1
+
+    inc eax                     ;not same name, next address
+    jmp checkAddress1
 equal1:
-	cmp	cl, 0
-	je	outputScore
-	inc	esi
-	jmp	compareString1
+    cmp cl, 0                   ;same name
+    je outputScore
+
+    inc esi                     ;read more
+    jmp compareString1
+
 outputScore:
-	mov 	ebx, 8
-	mul 	ebx
-	add	eax, data
-	add	eax, 4
-	;; 	mov	eax, data + eax * 8 + 4 
+    mov ebx, 8
+    mul ebx
+    add eax, data
+    add eax, 4
+    jmp return
 
-restore:	
-	pop	edi
-	pop	esi
-	pop	edx
-	pop	ecx
-	pop	ebx
-        ret
+notfound:
+    mov eax, 0
 
+return:
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    ret
 
-print_string:	
-	push eax
-	push ebx
-	push ecx
-	push edx
-	
-	mov ecx, ebx
-	mov edx, 0
-loop123:
-	mov al, [ecx + edx]
-	cmp al, 0
-	je print
-	inc edx
-	jmp loop123
+    section .data
+data:    times 400000 dd 0    ; ハッシュテーブル
+ndata:    equ    ($ - data) / 8    ; データの件数
 
-print:	
-	
-	mov eax, 4
-	mov ebx, 1
-	int 0x80
-	mov eax, 0
-	call print_eax
-
-	pop edx
-	pop ecx
-	pop ebx
-	pop eax
-
-	ret
-	
-	section .data
-data:	times 400000 dd 0	; ハッシュテーブル
-ndata:	equ	($ - data) / 8	; データの件数
+PRIME32_2: equ 2246822519
+PRIME32_3: equ 3266489917
+PRIME32_4: equ 668265263
+PRIME32_5: equ 374761393
