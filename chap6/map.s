@@ -1,7 +1,9 @@
+    ;Solving problem 1.6.5.
+    ;This source code used hash algorithm, xxHash.
     section .text
     global map_init, map_add, map_get
 
-map_init:
+map_init:           ;do nothing
     ret
 
 map_add:
@@ -18,8 +20,8 @@ map_add:
     mov edx, 0      ;init index of ebx
 
 createHash0:
-    push eax
-    mov eax, 0
+    push eax        ;escape hash
+    mov eax, 0      ;calc new hash
 
 read4Bytes0:
     push edx
@@ -48,46 +50,48 @@ skip0:
 xxHash:
     ;xxHash is hash algorithm thought by Cyan4973
     ;https://github.com/Cyan4973/xxHash
+    ;I referenced this article.
+    ;https://qiita.com/yuji_yasuhara/items/adefc967c51a6becca08
     push edx
 
-    mov esi, PRIME32_3
+    mov esi, PRIME32_3          ;eax *= PRIME32_3
     mul esi
 
-    mov esi, eax
+    mov esi, eax                ;eax = (eax << 17) || (eax >>> 15)
     shl esi, 17
     shr eax, 15
     add eax, esi
 
-    mov esi, PRIME32_4
+    mov esi, PRIME32_4          ;eax *= PRIME32_4
     mul esi
 
-    mov esi, eax
+    mov esi, eax                ;eax ^= eax>>15
     shr esi, 15
     xor eax, esi
 
-    mov esi, PRIME32_2
+    mov esi, PRIME32_2          ;eax *= PRIME32_2
     mul esi
 
-    mov esi, eax
+    mov esi, eax                ;eax ^= eax >> 13
     shr esi, 13
     xor eax, esi
 
-    mov esi, PRIME32_3
+    mov esi, PRIME32_3          ;eax *= PRIME32_3
     mul esi
 
-    mov esi, eax
+    mov esi, eax                ;eax ^= eax << 16
     shr esi, 16
     xor eax, esi
     
     mov edx, 0
     mov esi, ndata
     div esi
-    mov esi, edx
+    mov esi, edx                ;esi = eax % ndata
 
     pop edx
     pop eax
     
-    add eax, esi
+    add eax, esi                ;add total of hash and hash
 
     cmp ecx, 0
     jne createHash0
@@ -178,8 +182,7 @@ skip1:
     ;ebx > address of input string
 
 xxHash1:
-    ;xxHash is hash algorithm thought by Cyan4973
-    ;https://github.com/Cyan4973/xxHash
+    ;same code(51-102 lines)
     push edx
 
     mov esi, PRIME32_3
