@@ -42,6 +42,8 @@ skip:
     jmp loop0
 
 xxHash:
+;xxHash is hash algorithm thought by Cyan4973
+;https://github.com/Cyan4973/xxHash
     pop edi
     mov esi, PRIME32_3
     mul esi
@@ -74,6 +76,7 @@ xxHash:
 
     push edx
     mov esi, ndata      ;calc hash key
+    mov edx, 0
     div esi
     add edi, edx
     pop edx
@@ -103,6 +106,7 @@ compareString0:
 	mov edi, [data + eax * 8]
 ;;; 	 	mov	ecx, 0
 ;;; 	 	mov	edx, 0
+nnyaku 
 	mov	cl, [edi + esi]
 	mov	dl, [ebx + esi]
 	cmp	cl, dl
@@ -206,15 +210,16 @@ xxHash2:
     push edx
     mov edx, 0
     mov esi, ndata      ;calc hash key
-    call print_eax
     div esi
     add edi, edx
     pop edx
 
     cmp ecx, 1
     je read4Bytes
+
     push edx
     mov esi, ndata
+    mov edx, 0
     mov eax, edi
     div esi
     mov eax, edx
@@ -302,7 +307,7 @@ print:
 	ret
 	
 	section .data
-data:	times 400000 dd 0	; ハッシュテーブル
+data:	times 1999966 dd 0	; ハッシュテーブル
 ndata:	equ	($ - data) / 8	; データの件数
 
 PRIME32_2: equ 2246822519
