@@ -13,7 +13,7 @@ map_add:
 	push	esi
 	push	edi
 	mov eax, 11111
-	;; 	call print_eax
+	;call print_eax
 	;; ハッシュ値を算出
     push ecx
     mov edi, 0
@@ -90,6 +90,8 @@ xxHash:
     div esi
     mov eax, edx
     pop edx
+    
+    ;call print_eax
 
 checkAddress0:
 	cmp	eax, ndata
@@ -106,15 +108,14 @@ compareString0:
 	mov edi, [data + eax * 8]
 ;;; 	 	mov	ecx, 0
 ;;; 	 	mov	edx, 0
-nnyaku 
 	mov	cl, [edi + esi]
 	mov	dl, [ebx + esi]
 	cmp	cl, dl
 	je	equal0
 
 	push	eax
-	mov	eax, 77777
-	call	print_eax
+	;mov	eax, 77777
+	;call	print_eax
 	pop	eax
 	
 	inc	eax
@@ -135,7 +136,8 @@ inputScore:
 	pop	ecx
 	pop	ebx
 	pop	eax
-        ret
+
+    ret
 
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 map_get:	
@@ -145,12 +147,11 @@ map_get:
 	push	esi
 	push	edi
 	push eax
-	mov eax, 99999
-	;; 	call print_eax
+	;mov eax, 99999
+	;call print_eax
 	pop eax
 
 	;; ハッシュ値を算出
-    push ecx
     mov edi, 0
 
 read4Bytes2:
@@ -307,7 +308,7 @@ print:
 	ret
 	
 	section .data
-data:	times 1999966 dd 0	; ハッシュテーブル
+data:	times 4000000 dd 0	; ハッシュテーブル
 ndata:	equ	($ - data) / 8	; データの件数
 
 PRIME32_2: equ 2246822519
