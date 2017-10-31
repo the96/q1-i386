@@ -1,6 +1,5 @@
     section .text
     global mul_eax_edx
-    extern print_eax
 mul_eax_edx:
     push ebx
     push ecx
