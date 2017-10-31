@@ -1,5 +1,6 @@
     section .text
     global mul_eax_edx
+    extern print_eax
 mul_eax_edx:
     push ebx
     push ecx
@@ -22,6 +23,8 @@ skip:
     inc ecx
     cmp edx, 0
     jg loop
+
+    mov eax, esi
 
     pop edi
     pop esi
