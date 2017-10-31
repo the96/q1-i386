@@ -8,19 +8,14 @@ mul_eax_edx:
     push esi
     push edi
 
-    mov cl, 0      ;counter reset
     mov esi, 0
 loop:
-    mov ebx, edx
-    and ebx, 1      ;get last bit
-    cmp ebx, 1      ;last bit is 1
-    jne skip
-    mov edi, eax
-    shl edi, cl     ;edi *= 2 ^ cl
-    add esi, edi    ;sum
+    test edx, 1     ;get last bit
+    jz skip         ;if zf,skip
+    add esi, eax    ;if nz,esi += eax
 skip:
-    shr edx, 1
-    inc ecx
+    shr edx, 1      ;next carry
+    shl eax, 1      ;carry up
     cmp edx, 0
     jg loop
 
