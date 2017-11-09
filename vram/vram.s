@@ -25,10 +25,11 @@ fill:
     cmp bx, 4000
     jle fill
 
-    mov bx, [fruit] ; アイテムの座標
-;    cmp bx, 2010    ; 存在するか？
-;    je exist       ; 存在する場合スキップ
-;    call genRandom
+    mov bx, [cs:fruit] ; アイテムの座標
+    cmp bx, 0xffff     ; 存在するか？
+    jne exist          ; 存在する場合スキップ
+    call genRandom
+    mov [cs:fruit], bx
 
 exist:
     mov cl, 'J'
@@ -136,7 +137,7 @@ bxWrite:
     push ebx
     push ecx
     push edx
-    mov ax, [fruit] 
+    mov ax, [cs:fruit] 
     mov bx, 0
 divAX:
     mov dx, 0
@@ -158,26 +159,28 @@ divAX:
     
 
 genRandom:
-    ;fruitの座標を自作疑似乱数で生成してbxに代入
+    ; fruitの座標を自作疑似乱数で生成してbxに代入
+    ; 乱数の生成方法はxxHashの計算方法を参考にしています。
     push eax
     push ecx
     push edx
     mov ah, 0x02    ; 残念ながらでたらめな時刻を取得
     int 0x1a
-    mov ah, 10      ; 分を被乗数の上位8bitに
-    mov al, 22      ; 秒を被乗数の上位8bitに
-    ;mov cx, 25639   ; 大きめの素数を乗数に
-    ;mul cx
-    ;mov cx, ax
-    ;shr cx, 7
-    ;shl ax, 9
-    ;xor ax, cx      ; ax = cx >> 7 ^ ax << 9
-    ;mov cx, 22907   ; 大きめの素数を乗数に
-    ;mul cx
-    ;mov cx, ax
-    ;shr cx, 5
-    ;shl ax, 11
-    ;xor ax, cx
+    mov ah, cl      ; 分を被乗数の上位8bitに
+    mov al, dh      ; 秒を被乗数の上位8bitに
+    mul ax
+    add ax, 25091   ; 素数+4
+    mov cx, 25639   ; 大きめの素数を乗数に
+    mul cx
+    mov cx, ax
+    shr cx, 7
+    shl ax, 9
+    xor ax, cx      ; ax = cx >> 7 ^ ax << 9
+    mov cx, 22907   ; 大きめの素数を乗数に
+    mul cx
+    mov cx, ax
+    shr cx, 8
+    xor ax, cx
     mov dx, 0
     mov cx, 2000    ; ハッシュから座標を求める
     div cx
@@ -188,9 +191,10 @@ genRandom:
     pop edx
     pop ecx
     pop eax
+    ret
 
 
-fruit:  dw    10      ; ワームが成長するために必要なアイテムの座標
+fruit:  dw    0xffff      ; ワームが成長するために必要なアイテムの座標
 
 	; 以降はセクタサイズに合わせるための詰め物
 	times	510-($-$$) db 0	; セクタ末尾まで0で埋める ($$は開始番地)
