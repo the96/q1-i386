@@ -160,33 +160,34 @@ divAX:
 
 genRandom:
     ; fruitの座標を自作疑似乱数で生成してbxに代入
-    ; 乱数の生成方法はxxHashの計算方法を参考にしています。
+    ; xorshift32を用いて乱数を生成
+    ; 詳しくは以下の記事を参照されたし。
+    ; https://blog.visvirial.com/articles/575
     push eax
     push ecx
     push edx
     mov ah, 0x02    ; 残念ながらでたらめな時刻を取得
     int 0x1a
-    mov ah, cl      ; 分を被乗数の上位8bitに
-    mov al, dh      ; 秒を被乗数の上位8bitに
-    mul ax
-    add ax, 25091   ; 素数+4
-    mov cx, 25639   ; 大きめの素数を乗数に
+    mov eax, 0
+    mov al, cl
+    mov ah, dh
+    shl eax, 16
+    mov al, ch
+    mov ecx, eax
+    shl ecx, 13
+    xor eax, ecx
+    mov ecx, eax
+    shr ecx, 17
+    xor eax, ecx
+    mov ecx, eax
+    shl ecx, 15
+    xor eax, ecx
+    mov ecx, 2000
+    mov edx, 0
+    div ecx
+    mov eax, edx
+    mov cx, 2
     mul cx
-    mov cx, ax
-    shr cx, 7
-    shl ax, 9
-    xor ax, cx      ; ax = cx >> 7 ^ ax << 9
-    mov cx, 22907   ; 大きめの素数を乗数に
-    mul cx
-    mov cx, ax
-    shr cx, 8
-    xor ax, cx
-    mov dx, 0
-    mov cx, 2000    ; ハッシュから座標を求める
-    div cx
-    mov ax, dx
-    mov cl, 2
-    mul cl
     mov bx, ax      ; 座標は2の倍数なので2倍する
     pop edx
     pop ecx
