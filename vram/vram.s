@@ -64,16 +64,16 @@ write:
 ;TODO
 ;caretの位置を後ろにずらし(た)、caret+lengthの位置に頭の座標を書き込む
 ;移動前に座標を取得・書き込む必要がある。
-;    mov ecx, [cs:caret]
-;    mov edx, [cs:length]
-;    add ecx, edx
-;    cmp ecx, max_len
-;    jl else
-;    sub ecx, max_len
-;else:
-;    shl ecx, 1
-;    add ecx, body
-    mov [cs:body], bx
+    mov ecx, 0
+    mov cl, [cs:caret]
+    mov dl, [cs:length]
+    add cl, dl
+    cmp cl, max_len
+    jl else
+    sub cl, max_len
+else:
+    shl cl, 1
+    mov [cs:body + ecx], bx
 
     call calcLine   ; 移動前の行位置を計算し、dhで保持
     mov dh, dl
@@ -113,48 +113,50 @@ notW:
     cmp bx, [cs:fruit]          ; ワームとフルーツの座標の比較
     jne notget                  ; 一致していない
     mov [cs:fruit], word 0xffff ; fruitの座標を削除
-    mov eax, [cs:length]        ; ワームの体を伸ばす
-    inc eax                     ;
-    cmp eax, max_len
-    jge notget
-    mov [cs:length], eax
+    mov eax, 0
+    mov al, [cs:length]
+    inc al
+    cmp al, max_len
+    jg notget
+    mov [cs:length], al
 notget:
 
     mov cl, '@'
     mov ch, 0x0f
     mov	[bx], cx	            ; 文字と属性をVRAMに書き込む
     push ebx
+    mov al, [cs:caret]
+    inc al
+    cmp al, max_len
+    jl else3
+    sub al, max_len
+else3:
+    mov [cs:caret], al
     mov cl, 'o'
     mov eax, 0
+ 
 
 drawBody:
-;    cmp eax, [cs:length]
-;    jge break
-;    mov edx, [cs:caret]
-;    add edx, eax
-;    cmp edx, max_len
-;    jl else2
-;    sub edx, max_len
-;else2:
-;    shl edx, 1
-;    add edx, body
-;    mov bx, [cs:edx]
-    mov bx, [cs:body]
+    cmp al, [cs:length]
+    jge break
+    mov edx, 0
+    mov dl, [cs:caret]
+    add dl, al 
+    cmp dl, max_len
+    jl else2
+    sub dl, max_len
+else2:
+    shl dl, 1
+    add edx, body
+    mov bx, [cs:edx]
     cmp bx, 0xffff          ;初期値（身体の座標が指定されていない）
     je notDraw
     mov [bx], cx
 notDraw: 
-;    inc eax
-;    jmp drawBody
-;break:
-;    mov eax, [cs:caret]
-;    inc eax
-;    cmp eax, max_len
-;    jl else3
-;    sub eax, max_len
-;else3:
-;    mov [cs:caret], eax
-    
+    inc al
+    jmp drawBody
+break:
+   
     pop ebx
     call timer
 
@@ -201,7 +203,8 @@ calcLine:
 ;    push ebx
 ;    push ecx
 ;    push edx
-;    mov ax, [cs:fruit] 
+;    mov ax, 0
+;    mov al, [cs:caret] 
 ;    mov bx, 0
 ;divAX:
 ;    mov dx, 0
@@ -214,13 +217,13 @@ calcLine:
 ;    add bx, 2
 ;    cmp ax, 0
 ;    jne divAX
-;
+
 ;    pop edx
 ;    pop ecx
 ;    pop ebx
 ;    pop eax
 ;    ret
-    
+   
 genRandom:
     ; fruitの座標を自作疑似乱数で生成してbxに代入
     ; xorshift32を用いて乱数を生成
@@ -257,7 +260,7 @@ genRandom:
     pop eax
     ret
 
-max_len:    equ 1 
+max_len:    equ 10 
 fruit:      dw  0xffff          ; ワームが成長するために必要なアイテムの座標
 direction:  db  0               ; ワームの向いている方向、進行方向
 length:     db  0               ; ワームの体の長さ
