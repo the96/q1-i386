@@ -1,7 +1,6 @@
 # macros
 AS = nasm -fbin
 
-
 # pattern rules
 
 .PHONY: clean test
@@ -9,12 +8,14 @@ AS = nasm -fbin
 # generate rules
 
 # default target
+2nd: 2nd.s
+	$(AS) $<
+
 vram: vram.s
 	$(AS) $<
 
 clean:
 		rm -f *.o *.~ *.out
-
 
 test:
 		~y-takata/bochs
