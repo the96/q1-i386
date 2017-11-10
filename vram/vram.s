@@ -56,9 +56,7 @@ skipInput:
     ; bx : ＠の位置を保持しておくための座標
 write:
     mov [cs:direction], al
-;TODO
-;caretの位置を後ろにずらし(た)、caret+lengthの位置に頭の座標を書き込む
-;移動前に座標を取得・書き込む必要がある。
+; caret+lengthの位置に移動前の頭の座標を書き込む。
     mov ecx, 0
     mov cl, [cs:caret]
     mov dl, [cs:length]
