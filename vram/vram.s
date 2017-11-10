@@ -35,7 +35,6 @@ exist:
     mov cl, 'J'
     mov ch, 0x0a
     mov [bx], cx
-    call bxWrite
 
     mov bx, di
 
@@ -45,15 +44,37 @@ input:
     jz skipInput
     mov ah, 0x00
     int 0x16
-    jmp write
+    cmp al, 'a'
+    je write
+    cmp al, 'w'
+    je write
+    cmp al, 's'
+    je write
+    cmp al, 'd'
+    je write
 
 skipInput:
-    mov al, '0'
+    mov al, [cs:direction]
 
     ; この時点で保持しておきたいレジスタの中身
     ; al : 入力されたキーのASCIIコード
     ; bx : ＠の位置を保持しておくための座標
 write:
+    mov [cs:direction], al
+;TODO
+;caretの位置を後ろにずらし(た)、caret+lengthの位置に頭の座標を書き込む
+;移動前に座標を取得・書き込む必要がある。
+;    mov ecx, [cs:caret]
+;    mov edx, [cs:length]
+;    add ecx, edx
+;    cmp ecx, max_len
+;    jl else
+;    sub ecx, max_len
+;else:
+;    shl ecx, 1
+;    add ecx, body
+    mov [cs:body], bx
+
     call calcLine   ; 移動前の行位置を計算し、dhで保持
     mov dh, dl
 
@@ -89,11 +110,54 @@ notD:
     sub bx, 160
 notW:
 
+    cmp bx, [cs:fruit]          ; ワームとフルーツの座標の比較
+    jne notget                  ; 一致していない
+    mov [cs:fruit], word 0xffff ; fruitの座標を削除
+    mov eax, [cs:length]        ; ワームの体を伸ばす
+    inc eax                     ;
+    cmp eax, max_len
+    jge notget
+    mov [cs:length], eax
+notget:
+
     mov cl, '@'
     mov ch, 0x0f
-    mov	[bx], cx	; 文字と属性をVRAMに書き込む
+    mov	[bx], cx	            ; 文字と属性をVRAMに書き込む
+    push ebx
+    mov cl, 'o'
+    mov eax, 0
 
+drawBody:
+;    cmp eax, [cs:length]
+;    jge break
+;    mov edx, [cs:caret]
+;    add edx, eax
+;    cmp edx, max_len
+;    jl else2
+;    sub edx, max_len
+;else2:
+;    shl edx, 1
+;    add edx, body
+;    mov bx, [cs:edx]
+    mov bx, [cs:body]
+    cmp bx, 0xffff          ;初期値（身体の座標が指定されていない）
+    je notDraw
+    mov [bx], cx
+notDraw: 
+;    inc eax
+;    jmp drawBody
+;break:
+;    mov eax, [cs:caret]
+;    inc eax
+;    cmp eax, max_len
+;    jl else3
+;    sub eax, max_len
+;else3:
+;    mov [cs:caret], eax
+    
+    pop ebx
     call timer
+
     jmp blackout 
 
 	hlt             ; HALT (CPUを停止)
@@ -110,7 +174,7 @@ timer:
 loop:
     mov ah, 0x00
     int 0x1a
-    cmp dx, 10
+    cmp dx, 25
     jle loop
 
     pop edx
@@ -132,32 +196,31 @@ calcLine:
     pop eax
     ret
 
-bxWrite:
-    push eax
-    push ebx
-    push ecx
-    push edx
-    mov ax, [cs:fruit] 
-    mov bx, 0
-divAX:
-    mov dx, 0
-    mov cx, 10
-    div cx
-    mov cl, dl
-    add cl, '0'
-    mov ch, 0x0f
-    mov [bx], cx
-    add bx, 2
-    cmp ax, 0
-    jne divAX
-
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
-    ret
+;bxWrite:
+;    push eax
+;    push ebx
+;    push ecx
+;    push edx
+;    mov ax, [cs:fruit] 
+;    mov bx, 0
+;divAX:
+;    mov dx, 0
+;    mov cx, 10
+;    div cx
+;    mov cl, dl
+;    add cl, '0'
+;    mov ch, 0x0f
+;    mov [bx], cx
+;    add bx, 2
+;    cmp ax, 0
+;    jne divAX
+;
+;    pop edx
+;    pop ecx
+;    pop ebx
+;    pop eax
+;    ret
     
-
 genRandom:
     ; fruitの座標を自作疑似乱数で生成してbxに代入
     ; xorshift32を用いて乱数を生成
@@ -194,8 +257,12 @@ genRandom:
     pop eax
     ret
 
-
-fruit:  dw    0xffff      ; ワームが成長するために必要なアイテムの座標
+max_len:    equ 1 
+fruit:      dw  0xffff          ; ワームが成長するために必要なアイテムの座標
+direction:  db  0               ; ワームの向いている方向、進行方向
+length:     db  0               ; ワームの体の長さ
+caret:      db  0               ; ワームの体の配列のうち、現在先頭が何番目か
+body:   times max_len dw 0xffff ; ワームの体の座標、初期値は体がない状態
 
 	; 以降はセクタサイズに合わせるための詰め物
 	times	510-($-$$) db 0	; セクタ末尾まで0で埋める ($$は開始番地)
