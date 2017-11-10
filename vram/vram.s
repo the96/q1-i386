@@ -51,9 +51,6 @@ input:
 skipInput:
     mov al, [cs:direction]  ; 入力がなければ、前回の入力を引き継ぐ
 
-    ; この時点で保持しておきたいレジスタの中身
-    ; al : 入力されたキーのASCIIコード
-    ; bx : ＠の位置を保持しておくための座標
 write:
     mov [cs:direction], al
 ; caret+lengthの位置に移動前の頭の座標を書き込む。
