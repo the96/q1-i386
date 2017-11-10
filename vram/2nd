@@ -1,0 +1,63 @@
+; 下記に掲載のプログラムを基に作成した:
+; http://d.hatena.ne.jp/rudeboyjet/20080108/p1
+; テキストVRAMの使い方は下記を参照:
+; https://en.wikipedia.org/wiki/VGA-compatible_text_mode
+
+	; ブートストラップコードは Real-address mode で実行されるので,
+	; 32ビットの番地を指定しても下位16ビットのみ使用される.
+
+	; AX, CX, DXは番地の指定に使えない (EAX, ECX, EDXは使える).
+
+	org	0x7c00		; 開始番地
+
+	mov	ax, 0xb800	; VRAMの開始番地 (÷ 16)
+	mov	ds, ax		; セグメントレジスタにVRAMの番地を代入
+    mov esi, 50
+load:
+    mov ah, 0x02
+    mov al, 1
+    mov ch, 0 
+    mov cl, 2 
+    mov dh, 0
+    mov bx, 0
+    mov dl, 0x00
+    mov di, 0x820
+    mov es, di
+    int 0x13
+    jnc 0x820 
+    mov al, ah
+loop0:
+    mov ah, 0
+    mov dl, 16
+    div dl
+    mov cl, ah
+    cmp cl, 10
+    jl skip
+    add cl, 0x7
+skip:
+    add cl, 0x30
+    mov ch, 0x0f
+    mov [bx], cx
+    add bx, 2
+    cmp al, 0
+    jne loop0
+    dec esi
+    jnz load
+
+	hlt             ; HALT (CPUを停止)
+
+	; 以降はセクタサイズに合わせるための詰め物
+	times	510-($-$$) db 0	; セクタ末尾まで0で埋める ($$は開始番地)
+	db	0x55, 0xaa	; Boot Signature
+
+here:equ $
+
+    mov bx, 0
+    mov cl, '@'
+    mov ch, 0x0f
+    mov [bx],cx
+
+    hlt             ; CPUを停止
+
+    times   510 - ($-here) db 0
+    db  0x55, 0xaa  ;boot signature
