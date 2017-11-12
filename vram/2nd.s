@@ -63,76 +63,57 @@ second:
     call printLogo              ; 描画するサブルーチンを呼び出し
     pop bx
 
-    mov eax, data1
+    mov eax, data1              ; ロゴのWORmの文字部分を描画
     mov ch, 0x2a
     mov cl, 0xdb
     push bx
     call printLogo
     pop bx
 
-    mov eax, data2
+    mov eax, data2              ; ロゴのバナナ部分を描画
     add bx, 24
     mov ch, 0xae
     mov cl, 0xdb
     call printLogo
 
-    mov eax, data3
-    mov bx, 2946
+    mov eax, data3              ; 操作説明を表示
+    mov bx, 2462
     mov ch, 0x02
     mov si, bx
-    call drawText
+    call printText
 
-    mov ah, 0x0
+    mov eax, data4              ; アイテムの説明を表示
+    mov bx, 3570
+    mov ch, 0x0e
+    mov si, bx
+    call printText
+
+    mov ah, 0x0                 ; 入力を受けたらゲームの初期化処理へ
     int 0x16
 
 init:
     mov bx, 2000                ; 中央の座標
     mov [cs:fruit], word 0xffff ; フルーツの座標を初期化
     mov [cs:length], byte 0     ; 体長の長さを初期化
-    mov [cs:direction], byte 0  ; 進行方向を初期化
+    mov [cs:direction], byte 0x0  ; 進行方向を初期化
 
 blackout:
-    mov ch, 0x00
+    mov ch, 0x00                ; 画面を背景色で塗りつぶす
     call fillScreen
 
-    mov bx, [cs:fruit] ; アイテムの座標
-    cmp bx, 0xffff     ; 存在するか？
-    jne exist          ; 存在する場合スキップ
-    call genRandom
+drawItem:
+    mov bx, [cs:fruit]          ; アイテムの座標
+    cmp bx, 0xffff              ; 存在するか？
+    jne exist                   ; 存在する場合スキップ
+    call genRandom              ; アイテムの座標を乱数で生成
     mov [cs:fruit], bx
-
 exist:
-    mov cl, 'J'
+    mov cl, 'J'                 ; アイテムを描画
     mov ch, 0x0e
     mov [bx], cx
 
-    mov bx, di
+    mov bx, di                  ; bxを復帰
 
-input:
-; 0x00の入力読込みでは、入力を受けるまで動作が停止するため、
-; ステータス取得を先に行い、入力があれば入力読込みを実行する
-    mov ah, 0x01            ; キーボードのステータスを取得
-    int 0x16
-    jz skipInput            ; zf が false のときは、入力がない状態
-    mov ah, 0x00            ; キーボードの入力レジスタから取り出す
-    int 0x16                ; (ステータス取得では、レジスタがクリアされない)
-    cmp al, 'a'             ; 入力が操作に該当するキーなら受付
-    je write
-    cmp al, 'w'
-    je write
-    cmp al, 's'
-    je write
-    cmp al, 'd'
-    je write
-
-skipInput:
-    mov al, [cs:direction]  ; 入力がなければ、前回の入力を引き継ぐ
-
-    ; この時点で保持しておきたいレジスタの中身
-    ; al : 入力されたキーのASCIIコード
-    ; bx : ＠の位置を保持しておくための座標
-write:
-    mov [cs:direction], al
 ; caret+lengthの位置に移動前の頭の座標を書き込む。
     mov ecx, 0
     mov cl, [cs:caret]
@@ -148,35 +129,58 @@ else:
     call calcLine   ; 移動前の行位置を計算し、dhで保持
     mov dh, dl
 
-    cmp al, 'a'     ; aの入力を受けた場合
-    jne notA
-    sub bx, 2       ; 右に移動する
+input:
+; 0x00の入力読込みでは、入力を受けるまで動作が停止するため、
+; ステータス取得を先に行い、入力があれば入力読込みを実行する
+    mov ah, 0x01                ; キーボードのステータスを取得
+    int 0x16
+    jz noInput                 ; zf が false のときは、入力がない状態
+    mov ah, 0x00                ; キーボードの入力レジスタから取り出す
+    int 0x16                    ; (ステータス取得では、レジスタがクリアされない)
+compareInput:
+    cmp al, 'a'                 ; 入力が操作に該当するキーなら受付
+    je inputA 
+    cmp al, 's'
+    je inputS
+    cmp al, 'd'
+    je inputD
+    cmp al, 'w'
+    je inputW
+
+noInput:
+    mov al, [cs:direction]  ; 入力がなければ、前回の入力を引き継ぐ
+    cmp al, 0x0
+    je write
+    jmp compareInput
+
+inputA:
+    sub bx, 2       ; 左に移動する
     call calcLine   ; 移動後の座標が行をまたぐ場合、ゲームオーバー
     cmp dh, dl      ; 壁にぶつかった場合
     jne dead        ; ゲームオーバー時の処理にジャンプする
-notA:
+    jmp write
 
-    cmp al, 's'     ; sの入力を受けた場合
-    jne notS
+inputS:
     cmp bx, 3660    ; 一番下の行でsを入力した場合はゲームオーバー
     jge dead        ; ゲームオーバー時の処理にジャンプする
     add bx, 160     ; 下の行に移動する
-notS:
+    jmp write
 
-    cmp al, 'd'     ; dの入力を受けた場合
-    jne notD
+inputD:
     add bx, 2
     call calcLine   ; 移動後の座標が行をまたぐ場合、ゲームオーバー
     cmp dh, dl
     jne dead        ; ゲームオーバー時の処理にジャンプする
-notD:
+    jmp write
 
-    cmp al, 'w'     ; wを受けた場合の処理
-    jne notW
+inputW
     cmp bx, 160     ; 一番上の行でwを入力した場合はゲームオーバー
     jle dead        ; ゲームオーバー時の処理にジャンプする
     sub bx, 160     ; 上の行に移動
-notW:
+    jmp write
+
+write:
+    mov [cs:direction], al
     mov cl, '@'                 ; 入力文字と属性を設定
     mov ch, 0x0f
     mov	[bx], cx	            ; 文字と属性をVRAMに書き込む
@@ -248,38 +252,19 @@ dead:
     mov ch, 0x4f
     call printScore
 
-    mov eax, 712
-    mov edx, gameover
-    mov ch, 0x4f
 gameoverText:
-    mov cl, [cs:edx]
-    cmp cl, 0
-    je endWrite1
-    mov [eax], cx
-    inc edx
-    add eax, 2
-    jmp gameoverText
-
-endWrite1:
-    mov eax, 3106
-    mov esi, eax
-    mov edx, text 
+    mov ebx, 712
+    mov esi, ebx
+    mov eax, gameover
     mov ch, 0x4f
+    call printText
+
 continueText:
-    mov cl, [cs:edx]
-    inc edx
-    cmp cl, 0
-    je endWrite2
-    cmp cl, 0x0a
-    jne else5
-    add esi, 160
-    mov eax, esi
-    jmp continueText
-else5: 
-    mov [eax], cx
-    add eax, 2
-    jmp continueText
-endWrite2:
+    mov ebx, 3106
+    mov esi, ebx
+    mov eax, text
+    mov ch, 0x4f
+    call printText
  
 clearKey:                       ; キーボード入力を空にする
     mov ah, 0x01
@@ -420,22 +405,22 @@ printLogo:
 retLogo:
     ret
 
-drawText:
+printText:
     mov cl, [cs:eax]
     cmp cl, 0x0a
     jne notNewLine
     add si, 160
     mov bx, si
     inc eax
-    jmp drawText
+    jmp printText
 notNewLine:  
     cmp cl, 0x0
-    je breakText
+    je retText
     mov [bx], cx
     add bx, 2
     inc eax
-    jmp drawText
-breakText:
+    jmp printText
+retText:
     ret
 
 data1:      db  0, 12, 4, 2, 2, 2, 2, 2, 2,
@@ -448,17 +433,21 @@ data1:      db  0, 12, 4, 2, 2, 2, 2, 2, 2,
             db  104, 2, 4, 2, 6, 2, 2, 2,
             db  2, 2, 6, 10, 4, 6, 6, 1
 data2:      db  0, 2, 2, 158, 160, 160, 156, 2, 2, 1
-data3:      db  "start: push any key", 0x0a,
-            db  "up   : w key", 0x0a,
-            db  "down : s key", 0x0a,
-            db  "left : a key", 0x0a,
-            db  "right: d key", 0x00
+data3:      db  "   up   : w key", 0x0a,
+            db  "   down : s key", 0x0a,
+            db  "   left : a key", 0x0a,
+            db  "   right: d key", 0x0a,
+            db  0x0a
+            db  "start: push any key", 0x0
+
+data4:      db  "J is item for worm grow,banana.", 0x0a
+            db  "    Let's collect bananas!", 0x00 
 score:      db  " erocs", 0     ; 画面右下にスコアを表示する際の文字列
 gameover:   db  "GAME OVER", 0  ; ゲームオーバー時のテキスト
 text:       db  "continue: w key",
             db   0x0a,
             db  "quit    : q key",
-            db  0               ; コンティニュー時のテキスト
+            db  0x00            ; コンティニュー時のテキスト
 fruit:      dw  0xffff          ; ワームが成長するために必要なアイテムの座標
 direction:  db  0               ; ワームの向いている方向、進行方向
 length:     db  0               ; ワームの体の長さ
