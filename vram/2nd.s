@@ -18,7 +18,7 @@ load:
     mov es, ax
     mov bx, second          ; セカンダリローダのバッファ先をプライマリローダの下に指定
     mov ah, 0x02            ; セクタ読込みのサービスを指定
-    mov al, 2               ; 読み込むセクタ数を指定
+    mov al, 3               ; 読み込むセクタ数を指定
     mov ch, 0               ; トラックの下位8bit
     mov cl, 2               ; トラックの上位2bit+セクタを指定
     mov dh, 0               ; ヘッド番号を指定
@@ -51,6 +51,55 @@ skip:
     db     0x55, 0xaa           ; Boot Signature
 
 second:
+    mov ch, 0x0
+    call fillScreen
+
+    mov bx, 210
+    mov eax, data1
+    mov ch, 0x28
+    mov cl, 0xdb 
+    push bx
+    add bx, 162
+    call printLogo
+    pop bx
+
+    mov eax, data1
+    mov ch, 0x2a
+    mov cl, 0xdb
+    push bx
+    call printLogo
+    pop bx
+
+    mov eax, data2
+    add bx, 24
+    mov ch, 0xae
+    mov cl, 0xdb
+    call printLogo
+
+    mov eax, data3
+    mov bx, 2946
+    mov ch, 0x02
+    mov si, bx
+
+drawText:
+    mov cl, [cs:eax]
+    cmp cl, 0x0a
+    jne notNewLine
+    add si, 160
+    mov bx, si
+    inc eax
+    jmp drawText
+notNewLine:  
+    cmp cl, 0x0
+    je breakText
+    mov [bx], cx
+    add bx, 2
+    inc eax
+    jmp drawText
+breakText:
+
+    mov ah, 0x0
+    int 0x16
 
 init:
     mov bx, 2000                ; 中央の座標
@@ -215,10 +264,10 @@ dead:
     call printScore
 
     mov eax, 712
-    mov edx, 0
+    mov edx, gameover
     mov ch, 0x4f
 gameoverText:
-    mov cl, [cs:gameover + edx]
+    mov cl, [cs:edx]
     cmp cl, 0
     je endWrite1
     mov [eax], cx
@@ -228,16 +277,18 @@ gameoverText:
 
 endWrite1:
     mov eax, 3106
-    mov edx, 0
+    mov esi, eax
+    mov edx, text 
     mov ch, 0x4f
 continueText:
-    mov cl, [cs:text + edx]
+    mov cl, [cs:edx]
     inc edx
     cmp cl, 0
     je endWrite2
     cmp cl, 0x0a
     jne else5
-    mov eax, 3266 
+    add esi, 160
+    mov eax, esi
     jmp continueText
 else5: 
     mov [eax], cx
@@ -367,15 +418,37 @@ fillBar:
     mov [bx], cx
     sub bx, 2
     jmp fillBar
-
 return:
     pop ebx
     ret
 
+printLogo:
+    mov [bx], cx
+    inc eax
+    mov dx, 0
+    mov dl, [cs:eax]
+    cmp dl, 1
+    je retLogo
+    add bx, dx
+    jmp printLogo
+retLogo:
+    ret
 
-
-
-max_len:    equ 99 
+data1:      db 0, 12, 4, 2, 2, 2, 2, 2, 2,
+            db 4, 2, 2, 2, 2, 2, 4, 2,
+            db 2, 2, 2, 2, 104, 12, 4, 
+            db 10, 6, 10, 4, 6, 6, 102,
+            db 6, 6, 4, 10, 6, 10, 4,
+            db 6, 6, 102, 6, 6, 4, 10,
+            db 6, 2, 2, 2, 2, 6, 6, 6,
+            db 104, 2, 4, 2, 6, 2, 2, 2,
+            db 2, 2, 6, 10, 4, 6, 6, 1
+data2:      db 0, 2, 2, 158, 160, 160, 156, 2, 2, 1
+data3:      db "start: push any key", 0x0a,
+            db "up   : w key", 0x0a,
+            db "down : s key", 0x0a,
+            db "left : a key", 0x0a,
+            db "right: d key", 0x00
 score:      db  " erocs", 0     ; 画面右下にスコアを表示する際の文字列
 gameover:   db  "GAME OVER", 0  ; ゲームオーバー時のテキスト
 text:       db  "continue: w key",
@@ -386,8 +459,8 @@ fruit:      dw  0xffff          ; ワームが成長するために必要なア�
 direction:  db  0               ; ワームの向いている方向、進行方向
 length:     db  0               ; ワームの体の長さ
 caret:      db  0               ; ワームの体の配列のうち、現在先頭が何番目か
+max_len:    equ 99 
 body:   times max_len dw 0xffff ; ワームの体の座標、初期値は体がない状態
 
-    hlt             ; CPUを停止
-    times   2046 - ($-$$) db 0
+    times   2558 - ($-$$) db 0
     db  0x55, 0xaa  ;boot signature
