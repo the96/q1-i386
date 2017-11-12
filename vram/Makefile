@@ -3,20 +3,15 @@ AS = nasm -fbin
 
 # pattern rules
 
-.PHONY: clean test
+.PHONY: test
 
 # generate rules
 
 # default target
-test:2nd
+test:vram
 		~y-takata/bochs
-2nd: 2nd.s
-	$(AS) $<
-
+		
 vram: vram.s
 	$(AS) $<
-
-clean:
-		rm -f *.o *.~ *.out
 
 
