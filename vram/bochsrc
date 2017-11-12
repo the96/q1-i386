@@ -1,2 +1,2 @@
-ata0-master: type=disk, path=2nd, cylinders=1, heads=1, spt=3
+ata0-master: type=disk, path=2nd, cylinders=1, heads=1, spt=4
 boot: disk

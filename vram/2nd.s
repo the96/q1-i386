@@ -18,7 +18,7 @@ load:
     mov es, ax
     mov bx, second          ; セカンダリローダのバッファ先をプライマリローダの下に指定
     mov ah, 0x02            ; セクタ読込みのサービスを指定
-    mov al, 3               ; 読み込むセクタ数を指定
+    mov al, 4               ; 読み込むセクタ数を指定
     mov ch, 0               ; トラックの下位8bit
     mov cl, 2               ; トラックの上位2bit+セクタを指定
     mov dh, 0               ; ヘッド番号を指定
@@ -54,13 +54,13 @@ second:
     mov ch, 0x0
     call fillScreen
 
-    mov bx, 210
+    mov bx, 210                 ; ロゴのWORmの文字の影を描画
     mov eax, data1
-    mov ch, 0x28
+    mov ch, 0x28                ; 描画する文字の属性を変更
     mov cl, 0xdb 
     push bx
-    add bx, 162
-    call printLogo
+    add bx, 162                 ; 影なので右下に一つずらす
+    call printLogo              ; 描画するサブルーチンを呼び出し
     pop bx
 
     mov eax, data1
@@ -80,26 +80,7 @@ second:
     mov bx, 2946
     mov ch, 0x02
     mov si, bx
-
-drawText:
-    mov cl, [cs:eax]
-    cmp cl, 0x0a
-    jne notNewLine
-    add si, 160
-    mov bx, si
-    inc eax
-    jmp drawText
-notNewLine:  
-    cmp cl, 0x0
-    je breakText
-    mov [bx], cx
-    add bx, 2
-    inc eax
-    jmp drawText
-breakText:
-
-    mov ah, 0x0
-    int 0x16
+    call drawText
 
 init:
     mov bx, 2000                ; 中央の座標
@@ -254,6 +235,7 @@ notget:
 
     mov ch, 0x2f
     call printScore
+    mov di, 9
     call timer
 
     jmp blackout 
@@ -337,7 +319,7 @@ fill:
 timer:
     mov ah, 0x86
     mov dx, 0
-    mov cx, 9 
+    mov cx, di
     int 0x15
     cmp ah, 0x80
 waitLoop:    
@@ -367,6 +349,7 @@ genRandom:
     mov ah, dh
     shl eax, 16
     mov al, ch
+    mov ah, [cs:length]
     mov ecx, eax
     shl ecx, 13
     xor eax, ecx
@@ -434,21 +417,39 @@ printLogo:
 retLogo:
     ret
 
-data1:      db 0, 12, 4, 2, 2, 2, 2, 2, 2,
-            db 4, 2, 2, 2, 2, 2, 4, 2,
-            db 2, 2, 2, 2, 104, 12, 4, 
-            db 10, 6, 10, 4, 6, 6, 102,
-            db 6, 6, 4, 10, 6, 10, 4,
-            db 6, 6, 102, 6, 6, 4, 10,
-            db 6, 2, 2, 2, 2, 6, 6, 6,
-            db 104, 2, 4, 2, 6, 2, 2, 2,
-            db 2, 2, 6, 10, 4, 6, 6, 1
-data2:      db 0, 2, 2, 158, 160, 160, 156, 2, 2, 1
-data3:      db "start: push any key", 0x0a,
-            db "up   : w key", 0x0a,
-            db "down : s key", 0x0a,
-            db "left : a key", 0x0a,
-            db "right: d key", 0x00
+drawText:
+    mov cl, [cs:eax]
+    cmp cl, 0x0a
+    jne notNewLine
+    add si, 160
+    mov bx, si
+    inc eax
+    jmp drawText
+notNewLine:  
+    cmp cl, 0x0
+    je breakText
+    mov [bx], cx
+    add bx, 2
+    inc eax
+    jmp drawText
+breakText:
+    ret
+
+data1:      db  0, 12, 4, 2, 2, 2, 2, 2, 2,
+            db  4, 2, 2, 2, 2, 2, 4, 2,
+            db  2, 2, 2, 2, 104, 12, 4, 
+            db  10, 6, 10, 4, 6, 6, 102,
+            db  6, 6, 4, 10, 6, 10, 4,
+            db  6, 6, 102, 6, 6, 4, 10,
+            db  6, 2, 2, 2, 2, 6, 6, 6,
+            db  104, 2, 4, 2, 6, 2, 2, 2,
+            db  2, 2, 6, 10, 4, 6, 6, 1
+data2:      db  0, 2, 2, 158, 160, 160, 156, 2, 2, 1
+data3:      db  "start: push any key", 0x0a,
+            db  "up   : w key", 0x0a,
+            db  "down : s key", 0x0a,
+            db  "left : a key", 0x0a,
+            db  "right: d key", 0x00
 score:      db  " erocs", 0     ; 画面右下にスコアを表示する際の文字列
 gameover:   db  "GAME OVER", 0  ; ゲームオーバー時のテキスト
 text:       db  "continue: w key",
@@ -462,5 +463,5 @@ caret:      db  0               ; ワームの体の配列のうち、現在先�
 max_len:    equ 99 
 body:   times max_len dw 0xffff ; ワームの体の座標、初期値は体がない状態
 
-    times   2558 - ($-$$) db 0
+    times   2046 - ($-$$) db 0
     db  0x55, 0xaa  ;boot signature
