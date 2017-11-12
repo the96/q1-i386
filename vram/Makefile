@@ -8,6 +8,8 @@ AS = nasm -fbin
 # generate rules
 
 # default target
+test:2nd
+		~y-takata/bochs
 2nd: 2nd.s
 	$(AS) $<
 
@@ -17,5 +19,4 @@ vram: vram.s
 clean:
 		rm -f *.o *.~ *.out
 
-test:
-		~y-takata/bochs
+
