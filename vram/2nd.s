@@ -82,6 +82,9 @@ second:
     mov si, bx
     call drawText
 
+    mov ah, 0x0
+    int 0x16
+
 init:
     mov bx, 2000                ; 中央の座標
     mov [cs:fruit], word 0xffff ; フルーツの座標を初期化
