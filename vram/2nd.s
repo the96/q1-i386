@@ -51,7 +51,12 @@ skip:
     db     0x55, 0xaa           ; Boot Signature
 
 second:
-    mov bx, 2000    ; 中央の座標
+
+init:
+    mov bx, 2000                ; 中央の座標
+    mov [cs:fruit], word 0xffff ; フルーツの座標を初期化
+    mov [cs:length], byte 0     ; 体長の長さを初期化
+    mov [cs:direction], byte 0  ; 進行方向を初期化
 
 blackout:
     mov ch, 0x00
@@ -65,7 +70,7 @@ blackout:
 
 exist:
     mov cl, 'J'
-    mov ch, 0x0a
+    mov ch, 0x0e
     mov [bx], cx
 
     mov bx, di
@@ -104,7 +109,7 @@ write:
     jl else
     sub cl, max_len
 else:
-    shl cl, 1
+    shl cx, 1
     mov [cs:body + ecx], bx
 
     call calcLine   ; 移動前の行位置を計算し、dhで保持
@@ -149,7 +154,7 @@ notW:
     mov al, 0
 else3:
     mov [cs:caret], al
-
+    
     mov esi, ebx
     mov cl, 'o'
     mov eax, 0
@@ -159,12 +164,12 @@ drawBody:
     jge break
     mov edx, 0
     mov dl, [cs:caret]          ; 身体の座標を取り出すためのアドレスを計算
-    add dl, al 
+    add dl, al
     cmp dl, max_len
     jl else2
     sub dl, max_len
 else2:
-    shl dl, 1
+    shl dx, 1
     add edx, body
     mov bx, [cs:edx]            ; bxに身体を描画する座標を代入
     cmp bx, 0xffff              ; 初期値（身体の座標が指定されていない）
@@ -194,7 +199,7 @@ break:
     jl else4
     sub al, max_len
 else4:
-    shl al, 1
+    shl ax, 1
     mov [cs:body + eax], bx     ; 頭と胴体の間の座標をセット
 notget:
 
@@ -209,6 +214,61 @@ dead:
     mov ch, 0x4f
     call printScore
 
+    mov eax, 712
+    mov edx, 0
+    mov ch, 0x4f
+gameoverText:
+    mov cl, [cs:gameover + edx]
+    cmp cl, 0
+    je endWrite1
+    mov [eax], cx
+    inc edx
+    add eax, 2
+    jmp gameoverText
+
+endWrite1:
+    mov eax, 3106
+    mov edx, 0
+    mov ch, 0x4f
+continueText:
+    mov cl, [cs:text + edx]
+    inc edx
+    cmp cl, 0
+    je endWrite2
+    cmp cl, 0x0a
+    jne else5
+    mov eax, 3266 
+    jmp continueText
+else5: 
+    mov [eax], cx
+    add eax, 2
+    jmp continueText
+endWrite2:
+ 
+clearKey:                       ; キーボード入力を空にする
+    mov ah, 0x01
+    int 0x16
+    jz waitContinue
+    mov ah, 0x0
+    int 0x16
+    jmp clearKey
+
+waitContinue:
+    mov di, 200
+    call timer
+
+readContinue:
+    mov ah, 0x0
+    int 0x16
+    cmp al, 'w'
+    je init
+    cmp al, 'q'
+    je exitCode
+    jmp readContinue
+
+exitCode:
+    mov ch, 0x00
+    call fillScreen
 	hlt             ; HALT (CPUを停止)
 
 fillScreen:
@@ -224,15 +284,15 @@ fill:
     ret
 
 timer:
-    mov ah, 0x01
+    mov ah, 0x86
     mov dx, 0
-    int 0x1a
-
-loop:
-    mov ah, 0x00
-    int 0x1a
-    cmp dx, 25
-    jle loop
+    mov cx, 9 
+    int 0x15
+    cmp ah, 0x80
+waitLoop:    
+    jnc endWait
+    jmp waitLoop
+endWait:
     ret
 
 calcLine:
@@ -315,8 +375,13 @@ return:
 
 
 
-max_len:    equ 64
+max_len:    equ 99 
 score:      db  " erocs", 0     ; 画面右下にスコアを表示する際の文字列
+gameover:   db  "GAME OVER", 0  ; ゲームオーバー時のテキスト
+text:       db  "continue: w key",
+            db   0x0a,
+            db  "quit    : q key",
+            db  0               ; コンティニュー時のテキスト
 fruit:      dw  0xffff          ; ワームが成長するために必要なアイテムの座標
 direction:  db  0               ; ワームの向いている方向、進行方向
 length:     db  0               ; ワームの体の長さ
@@ -324,5 +389,5 @@ caret:      db  0               ; ワームの体の配列のうち、現在先�
 body:   times max_len dw 0xffff ; ワームの体の座標、初期値は体がない状態
 
     hlt             ; CPUを停止
-    times   1534 - ($-$$) db 0
+    times   2046 - ($-$$) db 0
     db  0x55, 0xaa  ;boot signature
