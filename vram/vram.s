@@ -455,5 +455,4 @@ caret:      db  0               ; ワームの体の配列のうち、現在先�
 max_len:    equ 99 
 body:   times max_len dw 0xffff ; ワームの体の座標、初期値は体がない状態
 
-    times   2046 - ($-$$) db 0
-    db  0x55, 0xaa  ;boot signature
+    times   2048 - ($-$$) db 0
