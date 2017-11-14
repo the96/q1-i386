@@ -8,10 +8,10 @@ AS = nasm -fbin
 # generate rules
 
 # default target
-test:vram
-		~y-takata/bochs
-		
 vram: vram.s
 	$(AS) $<
 
+test:vram
+		~y-takata/bochs
+	
 
