@@ -1,49 +1,27 @@
     section .text
     global isPrime
 isPrime:
-    push ebp
-    mov ebp, esp
-    push ebx
-    mov eax, [ebp + 8]
-    mov ebx, [ebp + 12]
-    mov [ebx], byte 1         ; 0は素数ではない(配列の初期化のことを考えて真偽値は反転)
-    mov [ebx + 1], byte 1     ; 1は素数ではない
-    cmp eax, [maxPrime]         ; 既に計算済みの範囲なら計算しない
-    jle endPrime
-    mov ecx, 2 
-
-eratosthenes:
-    mov edx, ecx
-    cmp byte [ebx + edx], 1   ; 素数でないなら飛ばす
-    je skipLoop0
+    mov eax, [esp + 4]      ; 引数を取得
+    mov ecx, 2              ; 除数の初期値をセット
+    cmp eax, ecx            ; 2未満の数は素数ではない
+    jl notPrime
 loop0:
-    add edx, ecx                ; 最大値(2^32)を越えたら終了
-    jc skipLoop0                ; つまり、桁溢れが発生したら終了
-    cmp edx, eax
-    jg skipLoop0
-    mov [ebx + edx], byte 1   ; 素数でないのでチェックをつける
+    cmp eax, ecx            ; 除数と被除数が一致した場合は素数
+    je itsPrime
+    mov edx, 0
+    div ecx                 ; 試し割り
+    cmp edx, 0              ; 余りが0なら素数ではない
+    je notPrime
+    cmp eax, ecx            ; 商が除数より小さい場合、除数は平方根を越えている
+    jl itsPrime
+    inc ecx                 ; 次の除数へ
+    mov eax, [esp + 4]      ; 被除数をセット
     jmp loop0
-skipLoop0:
-    cmp ecx, maxNum
-    je endPrime
-    inc ecx
-    cmp ecx, eax
-    jge endPrime
-    jmp eratosthenes
 
-endPrime:
-    cmp eax, [maxPrime]
-    jle notMax
-    mov [maxPrime], eax
-notMax:
-    mov ecx, 0
-    mov cl, [ebx + eax]
-    mov eax, ecx
-    pop ebx
-    pop ebp
+itsPrime:
+    mov eax, 1
     ret
 
-maxNum: equ 4294967295
-    section .data
-maxPrime:   dd  2           ; 既に検索したもっとも大きな素数を代入しておく
-                            ; 複数回実行したとき、計算量を減らすため
+notPrime:
+    mov eax, 0
+    ret
