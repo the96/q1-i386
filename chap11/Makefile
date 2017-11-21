@@ -4,7 +4,7 @@ LD = ld
 LDFLAGS = -m elf_i386
 CC = gcc
 CFLAGS = -m32 -W -Wall
-OBJS_PRIME = isPrime.o test_prime.o print_eax.o
+OBJS_PRIME = isPrime.o test_prime.o
 
 # pattern rules
 %.o: %.s
