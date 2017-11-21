@@ -14,7 +14,13 @@ loop0:
     je notPrime
     cmp eax, ecx            ; 商が除数より小さい場合、除数は平方根を越えている
     jl itsPrime
+    cmp ecx, 2              ; 最初のインクリだけ1加算、後は奇数のみ探索
+    jne incOdd
     inc ecx                 ; 次の除数へ
+    jmp continue
+incOdd:
+    add ecx, 2
+continue:
     mov eax, [esp + 4]      ; 被除数をセット
     jmp loop0
 
