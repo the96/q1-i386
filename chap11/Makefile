@@ -24,4 +24,4 @@ clean:
 		rm -f *.o *.~ *.out
 
 test:test_prime
-		./test_prime
+		./test_prime < test.in | diff - test.ans
