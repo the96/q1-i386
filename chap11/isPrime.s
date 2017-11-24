@@ -1,10 +1,13 @@
     section .text
     global isPrime
+    extern print_eax
 isPrime:
     mov eax, [esp + 4]      ; 引数を取得
     mov ecx, 2              ; 除数の初期値をセット
     cmp eax, ecx            ; 2未満の数は素数ではない
-    jl notPrime
+    jge loop0
+    test eax, eax           ; マイナスフラグがtrueなら、符号なしなので0x80000000より大きい
+    jns notPrime
 loop0:
     cmp eax, ecx            ; 除数と被除数が一致した場合は素数
     je itsPrime
